@@ -11,8 +11,7 @@ import numpy as np
 # it integrates well with numpy,but there are many more
 import matplotlib.pyplot as plt
 
-# random is a package for, well generating random numbers,
-# or picking random entries in a list.
+# i bet you figure out, what this package does:
 import random
 
 
@@ -105,21 +104,99 @@ print('Y Mean: ' +  str(yMean))
 print('Y Standard Deviation: ' + str(yStd))
 
 
+
+# plotting this would be a little bit dull, lets get to something 
+# 'more' interesting: we use values from physics practical A, W1
+# they are found in the assets/ directory, in a .csv - file (comma seperated value)
+# every decent excel-like programme can output a file like that
+# we could totally write our own parser for storing the values in an array-object,
+# but there is already an excellent module for that
+import csv
+# now we initalize the ranges for the different parts of the graph
+x1 = []
+x2 = []
+x3 = []
+
+y1 = []
+y2 = []
+y3 = [] 
+
+x = []
+y = []
+
+
+with open('assets/w1_values.csv') as openFile:
+	csvreader = csv.DictReader(openFile)
+	
+	for row in csvreader:
+		# here we insert the values into their respective ranges
+		if int(row['t']) < 360:
+			y1.append(float(row['T']))
+			x1.append(float(row['t']))
+		elif int(row['t']) < 660:
+			y2.append(float(row['T']))
+			x2.append(float(row['t']))
+		else:
+			y3.append(float(row['T']))
+			x3.append(float(row['t']))
+
+x = x1 + x2 + x3
+y = y1 + y2 + y3
+
+x1 = np.array(x1)
+x2 = np.array(x2)
+x3 = np.array(x3)
+y1 = np.array(y1)
+y2 = np.array(y2)
+y3 = np.array(y3)
+
+x = np.array(x)
+y = np.array(y)
+
 # lets do a linear regression:
 # there is a numpy function for this, its called polyfit(). 
-# its arguments are x, y, and the exponent of the fit-function
-m,b = np.polyfit(values[0], values[1], 1) 
+# its parameters are x,y and the degree of the fit function
+m1, b1 = np.polyfit(x1, y1, 1)
+m3, b3 = np.polyfit(x3, y3, 1)
 
-plt.plot(x, y, 'ro', x, m*x+b, '--k')
-# plt.plot(x, x, label='linear')
-# plt.plot(x, x**2, label='quadratic')
-# plt.plot(x, x**3, label='cubic')
+# so we obtain two linear fit functions with the following parameters:
+f = m1*x+b1
+g = m3*x+b3
 
-plt.xlabel('x label')
-plt.ylabel('y label')
+print('Linear Fit 1: ' + str(round(m1, 5)) + '*x+' + str(round(b1, 2)))
+print('Linear Fit 2: ' + str(round(m3, 5)) + '*x+' + str(round(b3, 2)))
 
-plt.title("Simple Plot")
+# this is a bar to visualize the center of the slope
+yBar = np.linspace(23.5, 29.5, 30)
+xBar = (330 + 660) / 2
 
-plt.legend('Legend')
+# lets get the intersections of f,g with the slope
+# we only have to evaluate f,g at x = xBar!
 
+iSec1 = m1*xBar+b1
+iSec2 = m3*xBar+b3
+
+
+# lets add error bars to our plot:
+# we assume to have a constant error of 0.1 °C in
+# the temperature reading:
+yerr = 0.1
+plt.errorbar(x, y, yerr, capsize=3, ls='none') 
+# the ls (linestyle) keyword argument fixed wierd behaviour
+
+
+
+# plotting is straigtforward: you only define a plt.plot() function
+# you actually can overload it
+# the stuff in '' corresponds to a colour and a sign for the graph
+plt.scatter(x, y, marker='+', color='r' ) # plotting x,y
+plt.plot(x, f, '--k') # plotting f 
+plt.plot(x, g, '-b') # plotting g
+plt.plot([xBar for i in range(len(yBar))], yBar) # plotting the bar
+plt.plot(xBar, iSec1, 'ro')
+plt.plot(xBar, iSec2, 'ro')
+# always label your axes!
+plt.xlabel('t/s')
+plt.ylabel('T/°C')
+plt.title('first plot!')
 plt.show()
